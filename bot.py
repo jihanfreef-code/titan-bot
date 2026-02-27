@@ -1,25 +1,27 @@
+import requests
 import time
 
-# TITAN MASTER MEMORY (Full Synchronized Data)
-DATABASE = "SBSSBSBBBSBSBBBSBBSSSSSBSSBBBSBBSBBSBBSBBSBBSBBSBBSBBSSSSSBBBSBBBSBSBBSSBBSBSBBSSBBSBSBBSBSBSSBBSBSBSSBBSBSBSSBBSBSBSSBBSBSBSSBBSSBBSBSBSSBBSSBBSBSBBSBSBSSBBSBBSBSBBSSBBSBSBBSSBBSBSBBSSBBSBSBBSSBBSBSBBSBBSBSSBBSBSBSSBBSBSBSSBBSBSBSSBBSSBBSBSBBSSBBSBSBBSSBBSBSBBSBSSBSBSBSBSSBSSBSSBBSBSBBSSBBSBSBSSBBSBSBBSSBBSSBBSBSBBSBSBSSBBSBBSBSBBSSBBSBSBBSSBBSBSBBSSBBSBSBBSSBBSBSBBSBBSBSSBBSBSBSSBBSBSBSSBBSBSBSSBBSSBBSBSBBSSBBSBSBBSSBBSBSB"
+# আগের সব BSBS মুছে একদম খালি করে দিলাম মামা
+DATABASE = ""
 
-def fetch_result():
-    # This will be replaced with real scraping logic later
-    return "B"
+def get_live_result():
+    try:
+        # DK Win 30S এর জন্য আপাতত ডামি রেজাল্ট
+        return "S" 
+    except:
+        return None
 
-def background_learning():
+def start_bot():
     global DATABASE
-    print("TITAN AI: Background Learning Mode Started...")
+    print("TITAN AI: DK Win (30S) Started with Fresh Memory...")
+    
     while True:
-        try:
-            new_res = fetch_result()
+        new_res = get_live_result()
+        if new_res:
             DATABASE += new_res
-            print(f"Sync Update: New result {new_res} added to memory.")
-            # 63 seconds delay to sync with period changes
-            time.sleep(63)
-        except Exception as e:
-            print(f"Error encountered: {e}")
-            time.sleep(10)
+            print(f"New Data: {new_res} | Total DB: {DATABASE}")
+        
+        time.sleep(20)
 
 if __name__ == "__main__":
-    background_learning()
+    start_bot()
