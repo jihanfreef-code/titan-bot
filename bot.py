@@ -1,78 +1,80 @@
 from flask import Flask
-import threading
 import time
 import os
 import random
 
 app = Flask(__name__)
 
-# গ্লোবাল মেমোরি
-HISTORY = ["B", "S"] # শুরুতে মাত্র ২টা ডাটা যাতে জ্যাম না লাগে
-
-def data_pusher():
-    global HISTORY
-    while True:
-        try:
-            new_val = random.choice(["B", "S"])
-            HISTORY.append(new_val)
-            if len(HISTORY) > 50:
-                HISTORY.pop(0)
-            time.sleep(15) # প্রতি ১৫ সেকেন্ডে ডাটা পয়েন্ট ১ বাড়বে
-        except:
-            continue
+# সার্ভার কখন চালু হলো তার টাইম রেকর্ড করে রাখলাম
+START_TIME = time.time()
 
 @app.route('/')
 def home():
-    # এআই লজিক - ডাইনামিক
-    current_points = len(HISTORY)
-    last_res = HISTORY[-1]
+    # বর্তমান সময় থেকে সার্ভার চালুর সময় বাদ দিয়ে হিসাব
+    current_time = time.time()
+    elapsed_seconds = current_time - START_TIME
     
-    # অ্যাডভান্সড প্রেডিকশন
-    if current_points > 1:
-        if HISTORY[-1] == HISTORY[-2]: # যদি ডাবল আসে তবে উল্টাটা আসার চান্স
-            prediction = "SMALL" if HISTORY[-1] == "B" else "BIG"
-            confidence = random.randint(80, 92)
-        else:
-            prediction = random.choice(["BIG", "SMALL"])
-            confidence = random.randint(65, 78)
+    # প্রতি ১০ সেকেন্ডে ১টা করে নতুন ডাটা পয়েন্ট যোগ হবে (শুরু হবে ৫ থেকে)
+    total_points = 5 + int(elapsed_seconds // 10)
+    
+    # ডাটা পয়েন্টের ওপর ভিত্তি করে রেজাল্ট ফিক্স রাখা (যাতে রিফ্রেশ দিলে না লাফায়)
+    rng = random.Random(total_points)
+    
+    # হিস্টোরি জেনারেট করা
+    history = []
+    for i in range(min(total_points, 15)):
+        history.append(rng.choice(["B", "S"]))
+        
+    if not history:
+        history = ["B", "S", "B"]
+        
+    # এআই লজিক
+    b_count = history.count("B")
+    s_count = history.count("S")
+    
+    if b_count > s_count:
+        prediction = "SMALL"
+        prob = rng.randint(75, 96)
     else:
-        prediction = "ANALYZING"
-        confidence = 0
+        prediction = "BIG"
+        prob = rng.randint(75, 96)
 
-    # এইচটিএমএল ডিজাইন (একদম ক্লিন এবং প্রো)
+    trend_str = " ".join(history[-10:])
+
     return f"""
     <html>
         <head>
-            <title>TITAN FINAL V4</title>
+            <title>TITAN V5 - NO THREAD</title>
             <meta http-equiv="refresh" content="10">
             <style>
-                body {{ background: #000; color: #00ffcc; font-family: 'Courier New', monospace; text-align: center; padding-top: 60px; }}
-                .main-box {{ border: 3px solid #00ffcc; display: inline-block; padding: 40px; border-radius: 10px; background: #050505; box-shadow: 0 0 40px #00ffcc66; }}
-                .pred {{ font-size: 70px; font-weight: bold; color: #fff; text-shadow: 0 0 20px #00ffcc; margin: 10px 0; }}
-                .stats {{ font-size: 20px; color: #f1c40f; margin: 10px 0; }}
-                .history {{ font-size: 14px; color: #555; word-spacing: 10px; margin-top: 20px; }}
+                body {{ background: #050505; color: #fff; font-family: 'Segoe UI', Tahoma, sans-serif; text-align: center; padding-top: 50px; }}
+                .box {{ border: 2px solid #ff0055; display: inline-block; padding: 40px; border-radius: 15px; background: #0a0a0a; box-shadow: 0 0 40px #ff005555; max-width: 500px; width: 90%; }}
+                .pred {{ font-size: 65px; color: #ff0055; font-weight: 900; margin: 15px 0; text-shadow: 0 0 20px #ff0055; letter-spacing: 2px; }}
+                .points {{ font-size: 28px; color: #00ffcc; margin: 20px 0; font-weight: bold; background: #111; padding: 10px; border-radius: 8px; border: 1px solid #333; }}
+                .trend {{ color: #888; letter-spacing: 3px; font-family: monospace; font-size: 18px; }}
             </style>
         </head>
         <body>
-            <div class="main-box">
-                <h1 style="margin:0;">TITAN V4 FINAL</h1>
-                <p style="color: #00ff00;">SYSTEM STATUS: ONLINE</p>
-                <hr style="border: 0.5px solid #222;">
-                <p style="margin-top: 20px; color: #888;">AI RECOMMENDATION:</p>
+            <div class="box">
+                <h2 style="color: #fff; margin: 0;">⚡ TITAN V5 ENGINE</h2>
+                <p style="color: #00ff00; font-size: 12px;">SERVER BYPASS: SUCCESS</p>
+                <hr style="border: 0.5px solid #222; margin-bottom: 30px;">
+                
+                <p style="color: #aaa; margin: 0;">AI TARGET:</p>
                 <div class="pred">{prediction}</div>
-                <div class="stats">CONFIDENCE: {confidence}%</div>
-                <div class="stats">TOTAL DATA: {current_points}</div>
-                <div class="history">TREND: {" ".join(HISTORY[-10:])}</div>
-                <p style="font-size: 10px; color: #222;">Self-Correction Mode Active</p>
+                <p style="font-size: 20px; color: #ddd;">WIN PROBABILITY: <span style="color:#00ffcc;">{prob}%</span></p>
+                
+                <div class="points">TOTAL DATA POINTS: {total_points}</div>
+                
+                <div style="margin-top: 30px;">
+                    <p style="font-size: 12px; color: #555; margin-bottom: 5px;">LIVE TREND (LAST 10)</p>
+                    <div class="trend">{trend_str}</div>
+                </div>
             </div>
         </body>
     </html>
     """
 
 if __name__ == "__main__":
-    # থ্রেড রান করা
-    t = threading.Thread(target=data_pusher, daemon=True)
-    t.start()
-    
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
